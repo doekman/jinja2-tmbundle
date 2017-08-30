@@ -1,59 +1,69 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>beforeRunningCommand</key>
 	<string>nop</string>
 	<key>command</key>
-	<string>. "$TM_SUPPORT_PATH/lib/webpreview.sh"
-html_header "Jinja Syntax Validation" "Jinja Templates"
+	<string>#!/bin/bash
+[[ -f "${TM_SUPPORT_PATH}/lib/bash_init.sh" ]] &amp;&amp; . "${TM_SUPPORT_PATH}/lib/bash_init.sh"
+
+. "$TM_SUPPORT_PATH/lib/webpreview.sh"
+html_header "Jinja2 Syntax Validation: [[[${PATH}]]]" "Jinja Templates"
 
 export TMPFILE="$(mktemp -t tm_jinja_test__)"
 cat /dev/stdin &gt; $TMPFILE
 
-python &lt;&lt;'END'
+
+#Converted to Python3 and Jinja2
+python3 &lt;&lt;'END'
 try:
-    from jinja import Environment
-    from jinja.exceptions import TemplateSyntaxError
+    from jinja2 import Environment
+    from jinja2.exceptions import TemplateSyntaxError
     e = Environment()
-except ImportError, e:
-    print "&lt;h2&gt;Error&lt;/h2&gt;"
-    print "&lt;p&gt;Jinja is not installed on this system, cannot perform syntax check.&lt;/p&gt;"
+except ImportError as e:
+    print("&lt;h2&gt;Error&lt;/h2&gt;")
+    print("&lt;p&gt;Jinja is not installed on this system, cannot perform syntax check.&lt;/p&gt;")
 else:
     import sys, os
     from cgi import escape
 
-    f = file(os.environ['TMPFILE'])
-    try:
+    with open(os.environ['TMPFILE'], 'r') as f:
         source = f.read()
-    finally:
-        f.close()
     try:
         e.parse(source, os.environ['TM_FILEPATH'])
-    except TemplateSyntaxError, err:
-        print e.from_string('''
+    except TemplateSyntaxError as err:
+        print(e.from_string('''
           &lt;h2&gt;Syntax Error in Line {{ err.lineno or '?' }}&lt;/h2&gt;
           &lt;p&gt;{{ err.message|e }}&lt;/p&gt;
           &lt;p&gt;&lt;a href="txmt://open/?url=file://{{ err.filename|urlencode }}&amp;line={{ err.lineno }}"&gt;Go To Line&lt;/a&gt;&lt;/p&gt;
-        ''').render(err=err)
+        ''').render(err=err))
     else:
-        print '&lt;h2&gt;Success&lt;/h2&gt;'
-        print '&lt;p&gt;no syntax errors found!&lt;/p&gt;'
+        print('&lt;h2&gt;Success&lt;/h2&gt;')
+        print('&lt;p&gt;no syntax errors found!&lt;/p&gt;')
 END
 
 html_footer
 rm $TMPFILE</string>
 	<key>input</key>
 	<string>document</string>
+	<key>inputFormat</key>
+	<string>text</string>
 	<key>keyEquivalent</key>
 	<string>^V</string>
 	<key>name</key>
 	<string>Validate Syntax</string>
-	<key>output</key>
-	<string>showAsHTML</string>
+	<key>outputCaret</key>
+	<string>afterOutput</string>
+	<key>outputFormat</key>
+	<string>html</string>
+	<key>outputLocation</key>
+	<string>newWindow</string>
 	<key>scope</key>
 	<string>source.jinja, text.html.jinja</string>
 	<key>uuid</key>
 	<string>07198D95-F344-47EB-B1F2-69F2DC10BA1F</string>
+	<key>version</key>
+	<integer>2</integer>
 </dict>
 </plist>
